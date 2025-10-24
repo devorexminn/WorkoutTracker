@@ -13,6 +13,9 @@ struct WorkoutTrackerApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            WorkoutSession.self,
+            ExerciseLog.self,
+            SetLog.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -24,9 +27,9 @@ struct WorkoutTrackerApp: App {
     }()
 
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+            WindowGroup {
+                ContentView()
+            }
+            .modelContainer(for: [WorkoutSession.self, ExerciseLog.self, SetLog.self])
         }
-        .modelContainer(sharedModelContainer)
     }
-}

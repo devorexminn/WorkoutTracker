@@ -29,7 +29,43 @@
 		F1D9BB162E91C9A400789231 /* WorkoutTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WorkoutTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F15827CC2E944A86001C6504 /* Exceptions for "Models" folder in "WorkoutTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				CustomExercise.swift,
+				Exercise.swift,
+				ExerciseViewModel.swift,
+				HeaderStyleModifier.swift,
+				SetEntryRow.swift,
+				WorkoutModels.swift,
+			);
+			target = F1D9BAFC2E91C9A200789231 /* WorkoutTracker */;
+		};
+		F15827CD2E944A86001C6504 /* Exceptions for "Models" folder in "WorkoutTrackerUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				CustomExercise.swift,
+				Exercise.swift,
+				ExerciseViewModel.swift,
+				HeaderStyleModifier.swift,
+				SetEntryRow.swift,
+				WorkoutModels.swift,
+			);
+			target = F1D9BB152E91C9A400789231 /* WorkoutTrackerUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		F15827CB2E944A7D001C6504 /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F15827CC2E944A86001C6504 /* Exceptions for "Models" folder in "WorkoutTracker" target */,
+				F15827CD2E944A86001C6504 /* Exceptions for "Models" folder in "WorkoutTrackerUITests" target */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		F1D9BAFF2E91C9A200789231 /* WorkoutTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = WorkoutTracker;
@@ -79,6 +115,7 @@
 				F1D9BB0F2E91C9A400789231 /* WorkoutTrackerTests */,
 				F1D9BB192E91C9A400789231 /* WorkoutTrackerUITests */,
 				F1D9BAFE2E91C9A200789231 /* Products */,
+				F15827CB2E944A7D001C6504 /* Models */,
 			);
 			sourceTree = "<group>";
 		};
@@ -154,6 +191,7 @@
 				F1D9BB182E91C9A400789231 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				F15827CB2E944A7D001C6504 /* Models */,
 				F1D9BB192E91C9A400789231 /* WorkoutTrackerUITests */,
 			);
 			name = WorkoutTrackerUITests;
@@ -400,14 +438,13 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.devorexMinn.WorkoutTracker;
+				PRODUCT_BUNDLE_IDENTIFIER = org.DevorexMinn.WorkoutTracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -422,13 +459,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z3VAWS3VJP;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
