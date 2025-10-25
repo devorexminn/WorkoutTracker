@@ -2,8 +2,6 @@
 //  WorkoutDetailView.swift
 //  WorkoutTracker
 //
-//  Created by Devorex Minn on 10/4/25.
-//
 
 import SwiftUI
 import SwiftData
@@ -11,54 +9,53 @@ import SwiftData
 struct WorkoutDetailView: View {
     @Environment(\.modelContext) private var context
     @State private var workout: WorkoutSession
-    @State private var completedSets: [UUID: [SetLog]] = [:]
-    
+
+    // ✅ Flat store keyed by SetLog.id so bindings always hit the same entry
+    //    Key = setID, Value = (reps, weight)
+    @State private var logged: [UUID: (reps: Double, weight: Double)] = [:]
+
     init(workout: WorkoutSession) {
         _workout = State(initialValue: workout)
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 headerSection
                 Divider()
-                
-                // MARK: Exercise / Superset Rendering
+
+                // Render supersets first (grouped), then singles
                 ForEach(sortedSupersetIDs, id: \.self) { supersetID in
                     if let supersetID = supersetID {
-                        // ✅ Superset Group
                         let group = groupedExercises[supersetID] ?? []
                         SupersetGroupView(
                             group: group,
                             supersetID: supersetID,
-                            bindingForSet: binding,
+                            bindingForSet: binding,            // ← uses setID now
                             supersetLabel: supersetLabel(for:)
                         )
                     } else {
-                        // ✅ Regular Exercises
                         let normalExercises = groupedExercises[nil] ?? []
                         ForEach(normalExercises) { exercise in
                             RegularExerciseView(
                                 exercise: exercise,
-                                bindingForSet: binding
+                                bindingForSet: binding           // ← uses setID now
                             )
                         }
                     }
                 }
-                
+
                 finishButton
             }
             .padding(.horizontal)
         }
         .navigationTitle("Active Workout")
         .navigationBarTitleDisplayMode(.inline)
-        // ✅ Initialize blank logs when the screen appears
-        .onAppear {
-            initializeEmptyLogs()
-        }
+        .onAppear { seedLoggedStoreIfNeeded() }   // ✅ ensure stable entries for all setIDs
     }
-    
-    // MARK: - Header Section
+
+    // MARK: - Header
+
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(workout.title)
@@ -69,8 +66,9 @@ struct WorkoutDetailView: View {
         }
         .padding(.top)
     }
-    
-    // MARK: - Finish Button
+
+    // MARK: - Finish
+
     private var finishButton: some View {
         Button {
             saveWorkoutProgress()
@@ -85,12 +83,13 @@ struct WorkoutDetailView: View {
         }
         .padding(.top)
     }
-    
-    // MARK: - Grouping Helpers
+
+    // MARK: - Grouping
+
     private var groupedExercises: [UUID?: [ExerciseLog]] {
         Dictionary(grouping: workout.exercises) { $0.supersetID }
     }
-    
+
     private var sortedSupersetIDs: [UUID?] {
         groupedExercises.keys.sorted {
             if $0 == nil { return true }
@@ -98,63 +97,65 @@ struct WorkoutDetailView: View {
             return $0!.uuidString < $1!.uuidString
         }
     }
-    
+
     private func supersetLabel(for id: UUID) -> String {
-        let allIDs = Array(
-            Set(workout.exercises.compactMap { $0.supersetID })
-        ).sorted(by: { $0.uuidString < $1.uuidString })
-        
+        let allIDs = Array(Set(workout.exercises.compactMap { $0.supersetID }))
+            .sorted { $0.uuidString < $1.uuidString }
         if let index = allIDs.firstIndex(of: id) {
             let letters = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
             return String(letters[index % letters.count])
         }
         return "?"
     }
-    
-    // MARK: - Binding Logic
+
+    // MARK: - Bindings (keyed by setID)
+
     enum FieldType { case reps, weight }
-    
+
+    /// Binding that reads/writes by the SetLog's id (setID).
+    /// This avoids any array reordering or ID-mismatch issues.
     func binding(for exerciseID: UUID, setID: UUID, type: FieldType) -> Binding<Double> {
         Binding {
-            // ✅ Only use logged values from completedSets (starts at 0)
-            if let updated = completedSets[exerciseID]?.first(where: { $0.id == setID }) {
-                return type == .reps ? Double(updated.reps) : updated.weight
-            } else {
-                return 0
-            }
+            let entry = logged[setID] ?? (reps: 0, weight: 0)
+            return (type == .reps) ? entry.reps : entry.weight
         } set: { newValue in
-            var sets = completedSets[exerciseID] ?? []
-            if let index = sets.firstIndex(where: { $0.id == setID }) {
-                if type == .reps {
-                    sets[index].reps = Int(newValue)
-                } else {
-                    sets[index].weight = newValue
+            var entry = logged[setID] ?? (reps: 0, weight: 0)
+            if type == .reps {
+                entry.reps = newValue
+            } else {
+                entry.weight = newValue
+            }
+            logged[setID] = entry
+        }
+    }
+
+    // MARK: - Seed logged store
+
+    /// Pre-create zeroed entries for every setID so the binding always finds a stable value.
+    private func seedLoggedStoreIfNeeded() {
+        for exercise in workout.exercises {
+            for set in exercise.sets {
+                if logged[set.id] == nil {
+                    logged[set.id] = (reps: 0, weight: 0)
                 }
             }
-            completedSets[exerciseID] = sets
         }
     }
-    
-    // MARK: - Initialize Blank Logs
-    private func initializeEmptyLogs() {
-        for exercise in workout.exercises {
-            let emptySets = exercise.sets.map { original in
-                // ✅ Always start at 0 reps & 0 weight (blank log)
-                SetLog(setNumber: original.setNumber, reps: 0, weight: 0)
-            }
-            completedSets[exercise.id] = emptySets
-        }
-    }
-    
-    // MARK: - Save Workout
+
+    // MARK: - Save
+
     private func saveWorkoutProgress() {
         workout.date = Date()
         workout.isCompleted = true
-        
-        // ✅ Replace exercise sets with completed logs
-        for (exerciseID, logs) in completedSets {
-            if let index = workout.exercises.firstIndex(where: { $0.id == exerciseID }) {
-                workout.exercises[index].sets = logs
+
+        // Write logged values back into the model by matching set.id
+        for eIndex in workout.exercises.indices {
+            for sIndex in workout.exercises[eIndex].sets.indices {
+                let setID = workout.exercises[eIndex].sets[sIndex].id
+                if let entry = logged[setID] {
+                    workout.exercises[eIndex].sets[sIndex].reps = Int(entry.reps)
+                    workout.exercises[eIndex].sets[sIndex].weight = entry.weight
+                }
             }
         }
 
