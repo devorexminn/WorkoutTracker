@@ -13,10 +13,20 @@ struct RegularExerciseView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(exercise.name)
-                .font(.headline)
-                .foregroundColor(.primary)
+            // MARK: Exercise Title + Planned Info
+            VStack(alignment: .leading, spacing: 2) {
+                Text(exercise.name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
+                if let firstSet = exercise.sets.first {
+                    Text("\(exercise.sets.count) sets × \(Int(firstSet.reps)) reps")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
+            }
+
+            // MARK: Logging Actual Sets
             ForEach(exercise.sets.sorted(by: { $0.setNumber < $1.setNumber })) { set in
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Set \(set.setNumber)")
@@ -27,7 +37,8 @@ struct RegularExerciseView: View {
                             Text("Reps")
                                 .font(.caption)
                                 .foregroundColor(.gray)
-                            TextField("0", value: bindingForSet(exercise.id, set.id, .reps), format: .number)
+                            // 👇 Leave blank for logging
+                            TextField("", value: bindingForSet(exercise.id, set.id, .reps), format: .number)
                                 .keyboardType(.numberPad)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 60)
@@ -37,7 +48,8 @@ struct RegularExerciseView: View {
                             Text("Weight (lb)")
                                 .font(.caption)
                                 .foregroundColor(.gray)
-                            TextField("0", value: bindingForSet(exercise.id, set.id, .weight), format: .number)
+                            // 👇 Leave blank for logging
+                            TextField("", value: bindingForSet(exercise.id, set.id, .weight), format: .number)
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 80)
@@ -51,7 +63,6 @@ struct RegularExerciseView: View {
                     RestTimerView()
                 }
             }
-
         }
         .padding()
         .background(Color.white)

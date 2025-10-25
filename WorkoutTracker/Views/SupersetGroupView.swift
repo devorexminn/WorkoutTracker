@@ -8,7 +8,7 @@ struct SupersetGroupView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            // Left purple vertical line
+            // Left vertical purple line
             if supersetID != nil {
                 Rectangle()
                     .fill(Color.purple.opacity(0.5))
@@ -24,28 +24,36 @@ struct SupersetGroupView: View {
                         .foregroundColor(.purple)
                 }
 
-                // ✅ Loop by set number first
+                // Loop over sets
                 ForEach(0..<maxSetCount(), id: \.self) { setIndex in
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Set \(setIndex + 1)")
                             .font(.subheadline.bold())
 
-                        // Each exercise in this set
+                        // Each exercise in the superset
                         ForEach(group) { exercise in
                             if setIndex < exercise.sets.count {
                                 let set = exercise.sets[setIndex]
 
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text(exercise.name)
-                                        .font(.subheadline)
-                                        .foregroundColor(.primary)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(exercise.name)
+                                            .font(.subheadline)
+                                            .foregroundColor(.primary)
+
+                                        if let firstSet = exercise.sets.first {
+                                            Text("\(exercise.sets.count) sets × \(Int(firstSet.reps)) reps")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
 
                                     HStack(spacing: 16) {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("Reps")
                                                 .font(.caption)
                                                 .foregroundColor(.gray)
-                                            TextField("0", value: bindingForSet(exercise.id, set.id, .reps), format: .number)
+                                            TextField("", value: bindingForSet(exercise.id, set.id, .reps), format: .number)
                                                 .keyboardType(.numberPad)
                                                 .textFieldStyle(.roundedBorder)
                                                 .frame(width: 60)
@@ -55,7 +63,7 @@ struct SupersetGroupView: View {
                                             Text("Weight (lb)")
                                                 .font(.caption)
                                                 .foregroundColor(.gray)
-                                            TextField("0", value: bindingForSet(exercise.id, set.id, .weight), format: .number)
+                                            TextField("", value: bindingForSet(exercise.id, set.id, .weight), format: .number)
                                                 .keyboardType(.decimalPad)
                                                 .textFieldStyle(.roundedBorder)
                                                 .frame(width: 80)
@@ -69,9 +77,8 @@ struct SupersetGroupView: View {
                             }
                         }
 
-                        // ✅ Rest block after all exercises in a set
+                        // Rest block after each round
                         RestTimerView()
-
                     }
                 }
             }

@@ -135,13 +135,13 @@ struct WorkoutPlannerView: View {
                                 ForEach(viewModel.exercises) { exercise in
                                     VStack(alignment: .leading, spacing: 4) {
                                         HStack(spacing: 10) {
-                                            AsyncImage(url: URL(string: exercise.gifUrl ?? "")) { image in
-                                                image.resizable()
-                                            } placeholder: {
-                                                Color.gray.opacity(0.2)
-                                            }
-                                            .frame(width: 60, height: 60)
-                                            .cornerRadius(8)
+//                                            AsyncImage(url: URL(string: exercise.gifUrl ?? "")) { image in
+//                                                image.resizable()
+//                                            } placeholder: {
+//                                                Color.gray.opacity(0.2)
+//                                            }
+//                                            .frame(width: 60, height: 60)
+//                                            .cornerRadius(8)
                                             
                                             VStack(alignment: .leading) {
                                                 Text(exercise.name.capitalized)
@@ -252,12 +252,15 @@ struct WorkoutPlannerView: View {
                                 ExerciseLog(
                                     name: exercise.name,
                                     sets: (1...exercise.sets).map {
-                                        SetLog(setNumber: $0, reps: exercise.targetReps, weight: 0)
+                                        // ✅ Use a default planned rep count if targetReps is 0
+                                        let plannedReps = exercise.targetReps > 0 ? exercise.targetReps : 12
+                                        return SetLog(setNumber: $0, reps: plannedReps, weight: 0)
                                     },
                                     supersetID: exercise.supersetGroupID
                                 )
                             }
                         )
+
                         
                         context.insert(newWorkout)
                         
@@ -315,7 +318,7 @@ struct WorkoutPlannerView: View {
             if selected.contains(exercise.id) {
                 exercise.isSuperset = true
                 exercise.supersetGroupID = supersetID
-                exercise.restPeriod = "90s"
+                exercise.restPeriod = "NONE"
                 exercise.sets = sets
             }
             updated.append(exercise)
@@ -389,7 +392,7 @@ struct ExerciseRow: View {
                 .frame(width: 50)
                 .textFieldStyle(.roundedBorder)
 
-            TextField("60s", text: $exercise.restPeriod)
+            TextField("60s9", text: $exercise.restPeriod)
                 .multilineTextAlignment(.center)
                 .frame(width: 60)
                 .textFieldStyle(.roundedBorder)
