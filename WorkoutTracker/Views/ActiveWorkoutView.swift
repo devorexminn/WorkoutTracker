@@ -1,7 +1,6 @@
 import SwiftUI
 import SwiftData
 
-
 struct ActiveWorkoutView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \WorkoutSession.date, order: .reverse)
@@ -9,15 +8,18 @@ struct ActiveWorkoutView: View {
     
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading) {
+            VStack {
                 
                 // MARK: Custom Header
                 Text("Your Workouts")
                     .headerStyle()
                     .padding(.horizontal)
-
+                    .padding(.top)
+                
                 if savedWorkouts.isEmpty {
-                    VStack(spacing: 12) {
+                    Spacer()
+                    
+                    VStack(spacing: 8) {
                         Text("No workouts yet")
                             .font(.headline)
                             .foregroundColor(.gray)
@@ -25,7 +27,9 @@ struct ActiveWorkoutView: View {
                             .font(.subheadline)
                             .foregroundColor(.gray.opacity(0.8))
                     }
-                    .padding(.top, 100)
+                    .multilineTextAlignment(.center)
+                    
+                    Spacer()
                 } else {
                     List {
                         ForEach(savedWorkouts) { workout in
@@ -44,7 +48,7 @@ struct ActiveWorkoutView: View {
                     .listStyle(.insetGrouped)
                 }
             }
-            .navigationBarHidden(true) // hide system title
+            .navigationBarHidden(true)
         }
     }
     

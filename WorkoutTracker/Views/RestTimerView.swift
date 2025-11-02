@@ -10,7 +10,7 @@ import SwiftUI
 struct RestTimerView: View {
     @State private var progress: Double = 0
     @State private var isRunning: Bool = false
-    let duration: Double = 90 // seconds
+    let duration: Double
 
     var body: some View {
         HStack {
@@ -27,7 +27,7 @@ struct RestTimerView: View {
                     .animation(.easeInOut(duration: 0.2), value: progress)
             }
 
-            Text(isRunning ? timeRemainingFormatted : "Rest for 90s")
+            Text(isRunning ? timeRemainingFormatted : "Rest for \(Int(duration))s")
                 .font(.subheadline)
                 .foregroundColor(.purple)
 

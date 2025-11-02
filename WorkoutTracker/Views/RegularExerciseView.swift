@@ -60,7 +60,7 @@ struct RegularExerciseView: View {
                     .background(Color.gray.opacity(0.05))
                     .cornerRadius(8)
 
-                    RestTimerView()
+                    RestTimerView(duration: 60)
                 }
             }
         }

@@ -78,7 +78,7 @@ struct SupersetGroupView: View {
                         }
 
                         // Rest block after each round
-                        RestTimerView()
+                        RestTimerView(duration: 90)
                     }
                 }
             }

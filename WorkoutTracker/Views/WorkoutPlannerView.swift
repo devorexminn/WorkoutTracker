@@ -250,7 +250,7 @@ struct WorkoutPlannerView: View {
                             Text("Exercise Name").bold().frame(maxWidth: .infinity, alignment: .leading)
                             Text("Sets").bold().frame(width: 40, alignment: .center)
                             Text("Reps").bold().frame(width: 50, alignment: .center)
-                            Text("Rest").bold().frame(width: 60, alignment: .center)
+                            //Text("Rest").bold().frame(width: 60, alignment: .center)
                         }
                         .font(.subheadline)
                         .padding(.horizontal, 4)
@@ -460,10 +460,10 @@ struct ExerciseRow: View {
                 .frame(width: 50)
                 .textFieldStyle(.roundedBorder)
 
-            TextField("60s", text: $exercise.restPeriod)
-                .multilineTextAlignment(.center)
-                .frame(width: 60)
-                .textFieldStyle(.roundedBorder)
+//            TextField("60s", text: $exercise.restPeriod)
+//                .multilineTextAlignment(.center)
+//                .frame(width: 60)
+//                .textFieldStyle(.roundedBorder)
         }
         .padding(6)
         .background(selectedExercises.contains(exercise.id) ? Color.purple.opacity(0.1) : Color.clear)
