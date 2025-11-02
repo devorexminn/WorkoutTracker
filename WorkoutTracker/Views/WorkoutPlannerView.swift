@@ -14,7 +14,9 @@ struct WorkoutPlannerView: View {
     @State private var selectedExercises: Set<UUID> = []
     @State private var showingSupersetSheet = false
     @State private var showingAddCustomExercise = false
+    @State private var showResults = true
 
+    
     @Environment(\.modelContext) private var context
     
     @Query(sort: \CustomExercise.dateAdded, order: .reverse)
@@ -83,94 +85,115 @@ struct WorkoutPlannerView: View {
                         Text(error)
                             .foregroundColor(.red)
                             .padding(.top, 8)
-                    } else {
-                        LazyVStack(alignment: .leading, spacing: 12) {
-
-                            // MARK: Custom Exercises (SwiftData)
-                            ForEach(customExercises.filter {
-                                searchTerm.isEmpty ||
-                                $0.name.localizedCaseInsensitiveContains(searchTerm) ||
-                                $0.target.localizedCaseInsensitiveContains(searchTerm) ||
-                                $0.bodyPart.localizedCaseInsensitiveContains(searchTerm)
-                            }) { custom in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack(spacing: 10) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.purple.opacity(0.2))
-                                            .frame(width: 60, height: 60)
-                                            .overlay(
-                                                Text("C")
-                                                    .font(.headline)
-                                                    .foregroundColor(.purple)
-                                            )
-
-                                        VStack(alignment: .leading) {
-                                            Text(custom.name.capitalized)
-                                                .font(.headline)
-                                            Text("\(custom.bodyPart.capitalized) • \(custom.target.capitalized)")
-                                                .font(.subheadline)
-                                                .foregroundColor(.gray)
-                                        }
-
-                                        Spacer()
-
-                                        Text("Custom")
-                                            .font(.caption2)
-                                            .padding(4)
-                                            .background(Color.purple.opacity(0.15))
-                                            .cornerRadius(6)
-                                    }
-
-                                    Button("+ Add to Workout") {
-                                        let newExercise = ExerciseItem(
-                                            name: custom.name.capitalized,
-                                            sets: 3,
-                                            targetReps: 12,
-                                            restPeriod: "60s",
-                                            isSuperset: false
-                                        )
-                                        addedExercises.append(newExercise)
-                                    }
-                                    .font(.caption)
+                    } else if !viewModel.exercises.isEmpty || !customExercises.isEmpty {
+                        // MARK: Toggle Button
+                        HStack {
+                            Button {
+                                withAnimation { showResults.toggle() }
+                            } label: {
+                                Label(showResults ? "Hide Results" : "Show Results",
+                                      systemImage: showResults ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
                                     .foregroundColor(.purple)
-                                    .padding(.top, 4)
-                                }
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(10)
-                                .shadow(color: .gray.opacity(0.1), radius: 2)
+                                    .font(.subheadline.bold())
                             }
+                            Spacer()
+                        }
+                        .padding(.top, 4)
 
-                            // MARK: API Exercises
-                            ForEach(viewModel.exercises) { exercise in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack(spacing: 10) {
-                                        VStack(alignment: .leading) {
-                                            Text(exercise.name.capitalized)
-                                                .font(.headline)
-                                            if let target = exercise.target {
-                                                Text(target.capitalized)
+                        if showResults {
+                            LazyVStack(alignment: .leading, spacing: 12) {
+                                // MARK: Custom Exercises (SwiftData)
+                                ForEach(customExercises.filter {
+                                    searchTerm.isEmpty ||
+                                    $0.name.localizedCaseInsensitiveContains(searchTerm) ||
+                                    $0.target.localizedCaseInsensitiveContains(searchTerm) ||
+                                    $0.bodyPart.localizedCaseInsensitiveContains(searchTerm)
+                                }) { custom in
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack(spacing: 10) {
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(Color.purple.opacity(0.2))
+                                                .frame(width: 60, height: 60)
+                                                .overlay(
+                                                    Text("C")
+                                                        .font(.headline)
+                                                        .foregroundColor(.purple)
+                                                )
+
+                                            VStack(alignment: .leading) {
+                                                Text(custom.name.capitalized)
+                                                    .font(.headline)
+                                                Text("\(custom.bodyPart.capitalized) • \(custom.target.capitalized)")
                                                     .font(.subheadline)
                                                     .foregroundColor(.gray)
                                             }
+
+                                            Spacer()
+
+                                            Text("Custom")
+                                                .font(.caption2)
+                                                .padding(4)
+                                                .background(Color.purple.opacity(0.15))
+                                                .cornerRadius(6)
                                         }
-                                        Spacer()
+
+                                        Button("+ Add to Workout") {
+                                            let newExercise = ExerciseItem(
+                                                name: custom.name.capitalized,
+                                                sets: 3,
+                                                targetReps: 12,
+                                                restPeriod: "60s",
+                                                isSuperset: false
+                                            )
+                                            addedExercises.append(newExercise)
+                                            // 👇 Auto-hide dropdown after adding
+                                            withAnimation { showResults = false }
+                                        }
+                                        .font(.caption)
+                                        .foregroundColor(.purple)
+                                        .padding(.top, 4)
                                     }
-                                    
-                                    Button("+ Add to Workout") {
-                                        addExercise(exercise)
-                                    }
-                                    .font(.caption)
-                                    .foregroundColor(.purple)
-                                    .padding(.top, 4)
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .shadow(color: .gray.opacity(0.1), radius: 2)
                                 }
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(10)
-                                .shadow(color: .gray.opacity(0.1), radius: 2)
+
+                                // MARK: API Exercises
+                                ForEach(viewModel.exercises) { exercise in
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        HStack(spacing: 10) {
+                                            VStack(alignment: .leading) {
+                                                Text(exercise.name.capitalized)
+                                                    .font(.headline)
+                                                if let target = exercise.target {
+                                                    Text(target.capitalized)
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.gray)
+                                                }
+                                            }
+                                            Spacer()
+                                        }
+
+                                        Button("+ Add to Workout") {
+                                            addExercise(exercise)
+                                            // 👇 Auto-hide dropdown after adding
+                                            withAnimation { showResults = false }
+                                        }
+                                        .font(.caption)
+                                        .foregroundColor(.purple)
+                                        .padding(.top, 4)
+                                    }
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .shadow(color: .gray.opacity(0.1), radius: 2)
+                                }
                             }
+                            .transition(.opacity.combined(with: .slide))
                         }
                     }
+
 
                     Divider()
                     
@@ -296,7 +319,13 @@ struct WorkoutPlannerView: View {
     private func search() async {
         let input = searchTerm.lowercased()
         await viewModel.searchExercises(for: input)
+        
+        // 👇 Automatically show results after each search
+        withAnimation {
+            showResults = true
+        }
     }
+
 
     private func addExercise(_ exercise: Exercise) {
         let newExercise = ExerciseItem(
