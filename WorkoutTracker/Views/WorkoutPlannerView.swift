@@ -85,7 +85,8 @@ struct WorkoutPlannerView: View {
                         Text(error)
                             .foregroundColor(.red)
                             .padding(.top, 8)
-                    } else if !viewModel.exercises.isEmpty || !customExercises.isEmpty {
+                    }
+                    else if !viewModel.exercises.isEmpty || !customExercises.isEmpty {
                         // MARK: Toggle Button
                         HStack {
                             Button {
@@ -311,6 +312,14 @@ struct WorkoutPlannerView: View {
                 }
                 .padding()
             }
+            .onChange(of: searchTerm) { newValue in
+                if newValue.trimmingCharacters(in: .whitespaces).isEmpty {
+                    // Clear results when search is empty
+                    viewModel.exercises.removeAll()
+                    showResults = false
+                }
+            }
+
             .navigationBarHidden(true)
         }
     }
