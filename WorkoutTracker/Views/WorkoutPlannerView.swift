@@ -16,6 +16,9 @@ struct WorkoutPlannerView: View {
     @State private var showingAddCustomExercise = false
     @State private var showResults = true
 
+    // ✅ Popup states
+    @State private var showSavePopup = false
+    @State private var showNameRequiredPopup = false
     
     @Environment(\.modelContext) private var context
     
@@ -24,317 +27,342 @@ struct WorkoutPlannerView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    
-                    // MARK: Header
-                    Text("Design Your Workout")
-                        .headerStyle()
-                    
-                    // MARK: Workout Name
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Workout Name:")
-                            .font(.headline)
-                        TextField("Enter workout name", text: $workoutName)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                    
-                    // MARK: Search Section
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Search Exercise or Body Part:")
-                            .font(.headline)
-
-                        HStack(spacing: 8) {
-                            TextField("e.g. glutes, chest, squat", text: $searchTerm)
+            ZStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        
+                        // MARK: Header
+                        Text("Design Your Workout")
+                            .headerStyle()
+                        
+                        // MARK: Workout Name
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Workout Name:")
+                                .font(.headline)
+                            TextField("Enter workout name", text: $workoutName)
                                 .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        // MARK: Search Section
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Search Exercise or Body Part:")
+                                .font(.headline)
 
-                            Button("Search") {
-                                Task { await search() }
-                            }
-                            .font(.system(.headline, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 14)
-                            .background(Color.purple.opacity(0.85))
-                            .cornerRadius(10)
+                            HStack(spacing: 8) {
+                                TextField("e.g. glutes, chest, squat", text: $searchTerm)
+                                    .textFieldStyle(.roundedBorder)
 
-                            // 👇 Inline smaller "+ Custom" button
-                            Button {
-                                showingAddCustomExercise = true
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(Color.purple.opacity(0.9))
-                                    .padding(9)
-                                    .background(Color.purple.opacity(0.08))
-                                    .cornerRadius(10)
-                            }
-                            .sheet(isPresented: $showingAddCustomExercise) {
-                                AddCustomExerciseView { newExercise in
-                                    addedExercises.append(newExercise)
+                                Button("Search") {
+                                    Task { await search() }
                                 }
-                            }
-                        }
-                    }
+                                .font(.system(.headline, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 14)
+                                .background(Color.purple.opacity(0.85))
+                                .cornerRadius(10)
 
-                    // MARK: Search Results
-                    if viewModel.isLoading {
-                        ProgressView("Loading...")
-                            .padding(.top, 8)
-                    } else if let error = viewModel.errorMessage {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .padding(.top, 8)
-                    }
-                    else if !viewModel.exercises.isEmpty || !customExercises.isEmpty {
-                        // MARK: Toggle Button
-                        HStack {
-                            Button {
-                                withAnimation { showResults.toggle() }
-                            } label: {
-                                Label(showResults ? "Hide Results" : "Show Results",
-                                      systemImage: showResults ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                                    .foregroundColor(.purple)
-                                    .font(.subheadline.bold())
-                            }
-                            Spacer()
-                        }
-                        .padding(.top, 4)
-
-                        if showResults {
-                            LazyVStack(alignment: .leading, spacing: 12) {
-                                // MARK: Custom Exercises (SwiftData)
-                                ForEach(customExercises.filter {
-                                    searchTerm.isEmpty ||
-                                    $0.name.localizedCaseInsensitiveContains(searchTerm) ||
-                                    $0.target.localizedCaseInsensitiveContains(searchTerm) ||
-                                    $0.bodyPart.localizedCaseInsensitiveContains(searchTerm)
-                                }) { custom in
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        HStack(spacing: 10) {
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(Color.purple.opacity(0.2))
-                                                .frame(width: 60, height: 60)
-                                                .overlay(
-                                                    Text("C")
-                                                        .font(.headline)
-                                                        .foregroundColor(.purple)
-                                                )
-
-                                            VStack(alignment: .leading) {
-                                                Text(custom.name.capitalized)
-                                                    .font(.headline)
-                                                Text("\(custom.bodyPart.capitalized) • \(custom.target.capitalized)")
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.gray)
-                                            }
-
-                                            Spacer()
-
-                                            Text("Custom")
-                                                .font(.caption2)
-                                                .padding(4)
-                                                .background(Color.purple.opacity(0.15))
-                                                .cornerRadius(6)
-                                        }
-
-                                        Button("+ Add to Workout") {
-                                            let newExercise = ExerciseItem(
-                                                name: custom.name.capitalized,
-                                                sets: 3,
-                                                targetReps: 12,
-                                                restPeriod: "60s",
-                                                isSuperset: false
-                                            )
-                                            addedExercises.append(newExercise)
-                                            // 👇 Auto-hide dropdown after adding
-                                            withAnimation { showResults = false }
-                                        }
-                                        .font(.caption)
-                                        .foregroundColor(.purple)
-                                        .padding(.top, 4)
+                                // 👇 Inline smaller "+ Custom" button
+                                Button {
+                                    showingAddCustomExercise = true
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(Color.purple.opacity(0.9))
+                                        .padding(9)
+                                        .background(Color.purple.opacity(0.08))
+                                        .cornerRadius(10)
+                                }
+                                .sheet(isPresented: $showingAddCustomExercise) {
+                                    AddCustomExerciseView { newExercise in
+                                        addedExercises.append(newExercise)
                                     }
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(10)
-                                    .shadow(color: .gray.opacity(0.1), radius: 2)
                                 }
+                            }
+                        }
 
-                                // MARK: API Exercises
-                                ForEach(viewModel.exercises) { exercise in
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        HStack(spacing: 10) {
-                                            VStack(alignment: .leading) {
-                                                Text(exercise.name.capitalized)
-                                                    .font(.headline)
-                                                if let target = exercise.target {
-                                                    Text(target.capitalized)
+                        // MARK: Search Results
+                        if viewModel.isLoading {
+                            ProgressView("Loading...")
+                                .padding(.top, 8)
+                        } else if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .padding(.top, 8)
+                        }
+                        else if !viewModel.exercises.isEmpty || !customExercises.isEmpty {
+                            // MARK: Toggle Button
+                            HStack {
+                                Button {
+                                    withAnimation { showResults.toggle() }
+                                } label: {
+                                    Label(showResults ? "Hide Results" : "Show Results",
+                                          systemImage: showResults ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                                        .foregroundColor(.purple)
+                                        .font(.subheadline.bold())
+                                }
+                                Spacer()
+                            }
+                            .padding(.top, 4)
+
+                            if showResults {
+                                LazyVStack(alignment: .leading, spacing: 12) {
+                                    // MARK: Custom Exercises (SwiftData)
+                                    ForEach(customExercises.filter {
+                                        searchTerm.isEmpty ||
+                                        $0.name.localizedCaseInsensitiveContains(searchTerm) ||
+                                        $0.target.localizedCaseInsensitiveContains(searchTerm) ||
+                                        $0.bodyPart.localizedCaseInsensitiveContains(searchTerm)
+                                    }) { custom in
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            HStack(spacing: 10) {
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .fill(Color.purple.opacity(0.2))
+                                                    .frame(width: 60, height: 60)
+                                                    .overlay(
+                                                        Text("C")
+                                                            .font(.headline)
+                                                            .foregroundColor(.purple)
+                                                    )
+
+                                                VStack(alignment: .leading) {
+                                                    Text(custom.name.capitalized)
+                                                        .font(.headline)
+                                                    Text("\(custom.bodyPart.capitalized) • \(custom.target.capitalized)")
                                                         .font(.subheadline)
                                                         .foregroundColor(.gray)
                                                 }
+
+                                                Spacer()
+
+                                                Text("Custom")
+                                                    .font(.caption2)
+                                                    .padding(4)
+                                                    .background(Color.purple.opacity(0.15))
+                                                    .cornerRadius(6)
                                             }
-                                            Spacer()
-                                        }
 
-                                        Button("+ Add to Workout") {
-                                            addExercise(exercise)
-                                            // 👇 Auto-hide dropdown after adding
-                                            withAnimation { showResults = false }
+                                            Button("+ Add to Workout") {
+                                                let newExercise = ExerciseItem(
+                                                    name: custom.name.capitalized,
+                                                    sets: 3,
+                                                    targetReps: 12,
+                                                    restPeriod: "60s",
+                                                    isSuperset: false
+                                                )
+                                                addedExercises.append(newExercise)
+                                                withAnimation { showResults = false }
+                                            }
+                                            .font(.caption)
+                                            .foregroundColor(.purple)
+                                            .padding(.top, 4)
                                         }
-                                        .font(.caption)
-                                        .foregroundColor(.purple)
-                                        .padding(.top, 4)
+                                        .padding()
+                                        .background(Color.white)
+                                        .cornerRadius(10)
+                                        .shadow(color: .gray.opacity(0.1), radius: 2)
                                     }
-                                    .padding()
-                                    .background(Color.white)
+
+                                    // MARK: API Exercises
+                                    ForEach(viewModel.exercises) { exercise in
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            HStack(spacing: 10) {
+                                                VStack(alignment: .leading) {
+                                                    Text(exercise.name.capitalized)
+                                                        .font(.headline)
+                                                    if let target = exercise.target {
+                                                        Text(target.capitalized)
+                                                            .font(.subheadline)
+                                                            .foregroundColor(.gray)
+                                                    }
+                                                }
+                                                Spacer()
+                                            }
+
+                                            Button("+ Add to Workout") {
+                                                addExercise(exercise)
+                                                withAnimation { showResults = false }
+                                            }
+                                            .font(.caption)
+                                            .foregroundColor(.purple)
+                                            .padding(.top, 4)
+                                        }
+                                        .padding()
+                                        .background(Color.white)
+                                        .cornerRadius(10)
+                                        .shadow(color: .gray.opacity(0.1), radius: 2)
+                                    }
+                                }
+                                .transition(.opacity.combined(with: .slide))
+                            }
+                        }
+
+                        Divider()
+                        
+                        // MARK: Superset + Delete Controls
+                        HStack(spacing: 10) {
+                            Button {
+                                if !selectedExercises.isEmpty {
+                                    showingSupersetSheet = true
+                                }
+                            } label: {
+                                Text("Superset")
+                                    .font(.system(.headline, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                                    .background(selectedExercises.isEmpty
+                                                ? Color(.systemGray4)
+                                                : Color.purple.opacity(0.85))
                                     .cornerRadius(10)
-                                    .shadow(color: .gray.opacity(0.1), radius: 2)
+                                    .animation(.easeInOut(duration: 0.2), value: selectedExercises.isEmpty)
+                            }
+                            .disabled(selectedExercises.isEmpty)
+                            .sheet(isPresented: $showingSupersetSheet) {
+                                SupersetSetPicker { selectedSetCount in
+                                    applySuperset(to: selectedExercises, sets: selectedSetCount)
                                 }
                             }
-                            .transition(.opacity.combined(with: .slide))
-                        }
-                    }
 
-
-                    Divider()
-                    
-                    // MARK: Superset + Delete Controls
-                    HStack(spacing: 10) {
-                        Button {
-                            if !selectedExercises.isEmpty {
-                                showingSupersetSheet = true
-                            }
-                        } label: {
-                            Text("Superset")
-                                .font(.system(.headline, design: .rounded))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, minHeight: 44)
-                                .background(selectedExercises.isEmpty
-                                            ? Color(.systemGray4)
-                                            : Color.purple.opacity(0.85))
-                                .cornerRadius(10)
-                                .animation(.easeInOut(duration: 0.2), value: selectedExercises.isEmpty)
-                        }
-                        .disabled(selectedExercises.isEmpty)
-                        .sheet(isPresented: $showingSupersetSheet) {
-                            SupersetSetPicker { selectedSetCount in
-                                applySuperset(to: selectedExercises, sets: selectedSetCount)
-                            }
-                        }
-
-                        Button {
-                            for id in selectedExercises {
-                                if let ex = addedExercises.first(where: { $0.id == id }) {
-                                    removeExercise(ex)
+                            Button {
+                                for id in selectedExercises {
+                                    if let ex = addedExercises.first(where: { $0.id == id }) {
+                                        removeExercise(ex)
+                                    }
                                 }
+                                selectedExercises.removeAll()
+                            } label: {
+                                Text("Delete")
+                                    .font(.system(.headline, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                                    .background(selectedExercises.isEmpty
+                                                ? Color(.systemGray4)
+                                                : Color.red.opacity(0.9))
+                                    .cornerRadius(10)
+                                    .animation(.easeInOut(duration: 0.2), value: selectedExercises.isEmpty)
                             }
-                            selectedExercises.removeAll()
-                        } label: {
-                            Text("Delete")
-                                .font(.system(.headline, design: .rounded))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, minHeight: 44)
-                                .background(selectedExercises.isEmpty
-                                            ? Color(.systemGray4)
-                                            : Color.red.opacity(0.9))
-                                .cornerRadius(10)
-                                .animation(.easeInOut(duration: 0.2), value: selectedExercises.isEmpty)
+                            .disabled(selectedExercises.isEmpty)
                         }
-                        .disabled(selectedExercises.isEmpty)
-                    }
-                    .padding(.vertical, 4)
-                    
-                    // MARK: Table Header
-                    HStack {
-                        Text("Exercise Name").bold().frame(maxWidth: .infinity, alignment: .leading)
-                        Text("Sets").bold().frame(width: 40, alignment: .center)
-                        Text("Reps").bold().frame(width: 50, alignment: .center)
-                        Text("Rest").bold().frame(width: 60, alignment: .center)
-                    }
-                    .font(.subheadline)
-                    .padding(.horizontal, 4)
-                    
-                    // MARK: Superset Grouping
-                    let grouped = groupExercisesBySuperset(addedExercises)
-                    
-                    LazyVStack(spacing: 8) {
-                        ForEach(grouped, id: \.self) { group in
-                            VStack(spacing: 0) {
-                                ForEach(group) { exercise in
-                                    ExerciseRow(
-                                        exercise: binding(for: exercise),
-                                        selectedExercises: $selectedExercises,
-                                        onDelete: { removeExercise($0) }
-                                    )
-                                }
-                            }
-                            .background(group.first?.isSuperset == true ? Color.purple.opacity(0.05) : Color.white)
-                            .cornerRadius(10)
-                        }
-                    }
-                    
-                    // MARK: Save Button
-                    Button {
-                        let newWorkout = WorkoutSession(
-                            title: workoutName,
-                            exercises: addedExercises.map { exercise in
-                                ExerciseLog(
-                                    name: exercise.name,
-                                    sets: (1...exercise.sets).map {
-                                        let plannedReps = exercise.targetReps > 0 ? exercise.targetReps : 12
-                                        return SetLog(setNumber: $0, reps: plannedReps, weight: 0)
-                                    },
-                                    supersetID: exercise.supersetGroupID
-                                )
-                            }
-                        )
+                        .padding(.vertical, 4)
                         
-                        context.insert(newWorkout)
-                        
-                        do {
-                            try context.save()
-                            print("✅ Workout saved successfully: \(newWorkout.title)")
-                            addedExercises.removeAll()
-                            workoutName = ""
-                        } catch {
-                            print("❌ Failed to save workout: \(error)")
+                        // MARK: Table Header
+                        HStack {
+                            Text("Exercise Name").bold().frame(maxWidth: .infinity, alignment: .leading)
+                            Text("Sets").bold().frame(width: 40, alignment: .center)
+                            Text("Reps").bold().frame(width: 50, alignment: .center)
+                            Text("Rest").bold().frame(width: 60, alignment: .center)
                         }
-                    } label: {
-                        Text("Save")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.purple)
-                            .cornerRadius(10)
+                        .font(.subheadline)
+                        .padding(.horizontal, 4)
+                        
+                        // MARK: Superset Grouping
+                        let grouped = groupExercisesBySuperset(addedExercises)
+                        
+                        LazyVStack(spacing: 8) {
+                            ForEach(grouped, id: \.self) { group in
+                                VStack(spacing: 0) {
+                                    ForEach(group) { exercise in
+                                        ExerciseRow(
+                                            exercise: binding(for: exercise),
+                                            selectedExercises: $selectedExercises,
+                                            onDelete: { removeExercise($0) }
+                                        )
+                                    }
+                                }
+                                .background(group.first?.isSuperset == true ? Color.purple.opacity(0.05) : Color.white)
+                                .cornerRadius(10)
+                            }
+                        }
+                        
+                        // MARK: Save Button
+                        Button {
+                            saveWorkout()
+                        } label: {
+                            Text("Save")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.purple)
+                                .cornerRadius(10)
+                        }
+                        .padding(.top, 12)
                     }
-                    .padding(.top, 12)
+                    .padding()
                 }
-                .padding()
+                
+                // ✅ Popups
+                if showSavePopup {
+                    SavedPopupView(message: "Workout Saved!", detail: "Review or start it in your Workout tab.")
+                }
+                if showNameRequiredPopup {
+                    SavedPopupView(message: "Name Required!", detail: "Please enter a workout name before saving.", color: .orange)
+                }
             }
             .onChange(of: searchTerm) { newValue in
                 if newValue.trimmingCharacters(in: .whitespaces).isEmpty {
-                    // Clear results when search is empty
                     viewModel.exercises.removeAll()
                     showResults = false
                 }
             }
-
             .navigationBarHidden(true)
         }
     }
     
-    // MARK: - Helpers
+    // MARK: - Save Logic
+    private func saveWorkout() {
+        guard !workoutName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            withAnimation {
+                showNameRequiredPopup = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showNameRequiredPopup = false
+                }
+            }
+            return
+        }
+        
+        let newWorkout = WorkoutSession(
+            title: workoutName,
+            exercises: addedExercises.map { exercise in
+                ExerciseLog(
+                    name: exercise.name,
+                    sets: (1...exercise.sets).map {
+                        let plannedReps = exercise.targetReps > 0 ? exercise.targetReps : 12
+                        return SetLog(setNumber: $0, reps: plannedReps, weight: 0)
+                    },
+                    supersetID: exercise.supersetGroupID
+                )
+            }
+        )
+        
+        context.insert(newWorkout)
+        
+        do {
+            try context.save()
+            print("✅ Workout saved successfully: \(newWorkout.title)")
+            addedExercises.removeAll()
+            workoutName = ""
+            withAnimation {
+                showSavePopup = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showSavePopup = false
+                }
+            }
+        } catch {
+            print("❌ Failed to save workout: \(error)")
+        }
+    }
+    
+    // MARK: - Other Helpers (unchanged)
     private func search() async {
         let input = searchTerm.lowercased()
         await viewModel.searchExercises(for: input)
-        
-        // 👇 Automatically show results after each search
-        withAnimation {
-            showResults = true
-        }
+        withAnimation { showResults = true }
     }
-
 
     private func addExercise(_ exercise: Exercise) {
         let newExercise = ExerciseItem(
@@ -398,7 +426,6 @@ struct WorkoutPlannerView: View {
         return result
     }
 }
-
 // MARK: - Subviews
 
 struct ExerciseRow: View {

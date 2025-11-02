@@ -38,6 +38,7 @@
 				ExerciseViewModel.swift,
 				HeaderStyleModifier.swift,
 				PrimaryButtonStyle.swift,
+				SavedPopupView.swift,
 				SetEntryRow.swift,
 				WorkoutModels.swift,
 			);
@@ -51,6 +52,7 @@
 				ExerciseViewModel.swift,
 				HeaderStyleModifier.swift,
 				PrimaryButtonStyle.swift,
+				SavedPopupView.swift,
 				SetEntryRow.swift,
 				WorkoutModels.swift,
 			);
