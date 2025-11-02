@@ -37,6 +37,7 @@
 				Exercise.swift,
 				ExerciseViewModel.swift,
 				HeaderStyleModifier.swift,
+				PrimaryButtonStyle.swift,
 				SetEntryRow.swift,
 				WorkoutModels.swift,
 			);
@@ -49,6 +50,7 @@
 				Exercise.swift,
 				ExerciseViewModel.swift,
 				HeaderStyleModifier.swift,
+				PrimaryButtonStyle.swift,
 				SetEntryRow.swift,
 				WorkoutModels.swift,
 			);
