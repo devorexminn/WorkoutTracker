@@ -46,7 +46,7 @@ struct WorkoutHistoryView: View {
                     Spacer()
                 } else {
                     List(sortedWorkouts) { workout in
-                        NavigationLink(destination: WorkoutDetailView(workout: workout)) {
+                        NavigationLink(destination: WorkoutHistoryDetailView(workout: workout)) {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(workout.date.formatted(date: .abbreviated, time: .omitted))
                                     .font(.subheadline)
