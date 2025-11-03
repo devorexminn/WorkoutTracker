@@ -8,54 +8,65 @@ import SwiftData
 
 struct WorkoutDetailView: View {
     @Environment(\.modelContext) private var context
-    @State private var workout: WorkoutSession
+    @Environment(\.dismiss) private var dismiss   // ✅ add this line
 
-    // ✅ Flat store keyed by SetLog.id so bindings always hit the same entry
-    //    Key = setID, Value = (reps, weight)
+    @State private var workout: WorkoutSession
     @State private var logged: [UUID: (reps: Double, weight: Double)] = [:]
+    @State private var showSavedPopup = false
 
     init(workout: WorkoutSession) {
         _workout = State(initialValue: workout)
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                headerSection
-                Divider()
+        ZStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    headerSection
+                    Divider()
 
-                // Render supersets first (grouped), then singles
-                ForEach(sortedSupersetIDs, id: \.self) { supersetID in
-                    if let supersetID = supersetID {
-                        let group = groupedExercises[supersetID] ?? []
-                        SupersetGroupView(
-                            group: group,
-                            supersetID: supersetID,
-                            bindingForSet: binding,            // ← uses setID now
-                            supersetLabel: supersetLabel(for:)
-                        )
-                    } else {
-                        let normalExercises = groupedExercises[nil] ?? []
-                        ForEach(normalExercises) { exercise in
-                            RegularExerciseView(
-                                exercise: exercise,
-                                bindingForSet: binding           // ← uses setID now
+                    // Render supersets first (grouped), then singles
+                    ForEach(sortedSupersetIDs, id: \.self) { supersetID in
+                        if let supersetID = supersetID {
+                            let group = groupedExercises[supersetID] ?? []
+                            SupersetGroupView(
+                                group: group,
+                                supersetID: supersetID,
+                                bindingForSet: binding,
+                                supersetLabel: supersetLabel(for:)
                             )
+                        } else {
+                            let normalExercises = groupedExercises[nil] ?? []
+                            ForEach(normalExercises) { exercise in
+                                RegularExerciseView(
+                                    exercise: exercise,
+                                    bindingForSet: binding
+                                )
+                            }
                         }
                     }
-                }
 
-                finishButton
+                    finishButton
+                }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
+
+            if showSavedPopup {
+                SavedPopupView(
+                    message: "Workout Saved!",
+                    detail: "Returning to your workouts...",
+                    color: .green
+                )
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                .animation(.easeInOut(duration: 0.3), value: showSavedPopup)
+            }
         }
         .navigationTitle("Active Workout")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { seedLoggedStoreIfNeeded() }   // ✅ ensure stable entries for all setIDs
+        .onAppear { seedLoggedStoreIfNeeded() }
     }
 
-    // MARK: - Header
-
+    // MARK: Header
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(workout.title)
@@ -67,11 +78,17 @@ struct WorkoutDetailView: View {
         .padding(.top)
     }
 
-    // MARK: - Finish
-
+    // MARK: Finish Button
     private var finishButton: some View {
         Button {
             saveWorkoutProgress()
+            showSavedPopup = true
+
+            // ✅ Keep popup up longer, then dismiss this screen
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+                showSavedPopup = false
+                dismiss() // ✅ Go back to ActiveWorkoutView cleanly
+            }
         } label: {
             Text("Finish Workout")
                 .font(.headline)
@@ -84,8 +101,7 @@ struct WorkoutDetailView: View {
         .padding(.top)
     }
 
-    // MARK: - Grouping
-
+    // MARK: Grouping + Binding + Save (unchanged)
     private var groupedExercises: [UUID?: [ExerciseLog]] {
         Dictionary(grouping: workout.exercises) { $0.supersetID }
     }
@@ -108,12 +124,8 @@ struct WorkoutDetailView: View {
         return "?"
     }
 
-    // MARK: - Bindings (keyed by setID)
-
     enum FieldType { case reps, weight }
 
-    /// Binding that reads/writes by the SetLog's id (setID).
-    /// This avoids any array reordering or ID-mismatch issues.
     func binding(for exerciseID: UUID, setID: UUID, type: FieldType) -> Binding<Double> {
         Binding {
             let entry = logged[setID] ?? (reps: 0, weight: 0)
@@ -129,9 +141,6 @@ struct WorkoutDetailView: View {
         }
     }
 
-    // MARK: - Seed logged store
-
-    /// Pre-create zeroed entries for every setID so the binding always finds a stable value.
     private func seedLoggedStoreIfNeeded() {
         for exercise in workout.exercises {
             for set in exercise.sets {
@@ -142,13 +151,10 @@ struct WorkoutDetailView: View {
         }
     }
 
-    // MARK: - Save
-
     private func saveWorkoutProgress() {
         workout.date = Date()
         workout.isCompleted = true
 
-        // Write logged values back into the model by matching set.id
         for eIndex in workout.exercises.indices {
             for sIndex in workout.exercises[eIndex].sets.indices {
                 let setID = workout.exercises[eIndex].sets[sIndex].id
