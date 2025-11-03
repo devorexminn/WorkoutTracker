@@ -334,7 +334,8 @@ struct WorkoutPlannerView: View {
                     },
                     supersetID: exercise.supersetGroupID
                 )
-            }
+            },
+            isTemplate: true // ✅ this one line is new
         )
         
         context.insert(newWorkout)

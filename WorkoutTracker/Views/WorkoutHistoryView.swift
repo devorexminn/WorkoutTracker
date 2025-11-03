@@ -4,10 +4,11 @@ import SwiftData
 struct WorkoutHistoryView: View {
     @AppStorage("historySortOrder") private var historySortOrder = "newest"
     
-    @Query(filter: #Predicate<WorkoutSession> { $0.isCompleted == true },
+    @Query(filter: #Predicate<WorkoutSession> { $0.isCompleted == true && $0.isTemplate == false },
            sort: \WorkoutSession.date,
            order: .reverse)
     private var pastWorkouts: [WorkoutSession]
+
     
     // Computed list that reorders based on user preference
     var sortedWorkouts: [WorkoutSession] {

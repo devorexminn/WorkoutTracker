@@ -1,4 +1,3 @@
-//
 //  WorkoutDetailView.swift
 //  WorkoutTracker
 //
@@ -8,7 +7,7 @@ import SwiftData
 
 struct WorkoutDetailView: View {
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss   // ✅ add this line
+    @Environment(\.dismiss) private var dismiss
 
     @State private var workout: WorkoutSession
     @State private var logged: [UUID: (reps: Double, weight: Double)] = [:]
@@ -25,7 +24,7 @@ struct WorkoutDetailView: View {
                     headerSection
                     Divider()
 
-                    // Render supersets first (grouped), then singles
+                    // Supersets first, then singles
                     ForEach(sortedSupersetIDs, id: \.self) { supersetID in
                         if let supersetID = supersetID {
                             let group = groupedExercises[supersetID] ?? []
@@ -84,10 +83,10 @@ struct WorkoutDetailView: View {
             saveWorkoutProgress()
             showSavedPopup = true
 
-            // ✅ Keep popup up longer, then dismiss this screen
+            // ✅ Longer popup, smoother exit
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
                 showSavedPopup = false
-                dismiss() // ✅ Go back to ActiveWorkoutView cleanly
+                dismiss()
             }
         } label: {
             Text("Finish Workout")
@@ -101,7 +100,7 @@ struct WorkoutDetailView: View {
         .padding(.top)
     }
 
-    // MARK: Grouping + Binding + Save (unchanged)
+    // MARK: Helpers
     private var groupedExercises: [UUID?: [ExerciseLog]] {
         Dictionary(grouping: workout.exercises) { $0.supersetID }
     }
@@ -151,21 +150,33 @@ struct WorkoutDetailView: View {
         }
     }
 
+    // MARK: Save Logic (new version)
     private func saveWorkoutProgress() {
-        workout.date = Date()
-        workout.isCompleted = true
-
-        for eIndex in workout.exercises.indices {
-            for sIndex in workout.exercises[eIndex].sets.indices {
-                let setID = workout.exercises[eIndex].sets[sIndex].id
-                if let entry = logged[setID] {
-                    workout.exercises[eIndex].sets[sIndex].reps = Int(entry.reps)
-                    workout.exercises[eIndex].sets[sIndex].weight = entry.weight
-                }
+        let newExercises: [ExerciseLog] = workout.exercises.map { exercise in
+            let newSets: [SetLog] = exercise.sets.map { set in
+                let entry = logged[set.id]
+                return SetLog(
+                    setNumber: set.setNumber,
+                    reps: Int(entry?.reps ?? Double(set.reps)),
+                    weight: entry?.weight ?? set.weight
+                )
             }
+            return ExerciseLog(
+                name: exercise.name,
+                sets: newSets,
+                supersetID: exercise.supersetID
+            )
         }
 
-        context.insert(workout)
+        let completedCopy = WorkoutSession(
+            date: Date(),
+            title: workout.title,
+            exercises: newExercises,
+            isCompleted: true,
+            isTemplate: false
+        )
+
+        context.insert(completedCopy)
         try? context.save()
     }
 }

@@ -3,8 +3,11 @@ import SwiftData
 
 struct ActiveWorkoutView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \WorkoutSession.date, order: .reverse)
+    @Query(filter: #Predicate<WorkoutSession> { $0.isTemplate == true },
+           sort: \WorkoutSession.date,
+           order: .reverse)
     private var savedWorkouts: [WorkoutSession]
+
     
     var body: some View {
         NavigationView {

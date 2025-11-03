@@ -14,17 +14,24 @@ class WorkoutSession {
     var date: Date
     var title: String
     var exercises: [ExerciseLog]
-    
-    // ✅ Add this new property
-     var isCompleted: Bool = false
+    var isCompleted: Bool
+    var isTemplate: Bool   // ✅ NEW
 
-    init(id: UUID = UUID(), date: Date = Date(), title: String, exercises: [ExerciseLog] = []) {
+    init(id: UUID = UUID(),
+         date: Date = Date(),
+         title: String,
+         exercises: [ExerciseLog] = [],
+         isCompleted: Bool = false,
+         isTemplate: Bool = false) {
         self.id = id
         self.date = date
         self.title = title
         self.exercises = exercises
+        self.isCompleted = isCompleted
+        self.isTemplate = isTemplate
     }
 }
+
 
 @Model
 class ExerciseLog {
