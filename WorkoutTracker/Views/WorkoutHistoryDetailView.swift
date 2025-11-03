@@ -82,7 +82,6 @@ struct WorkoutHistoryDetailView: View {
     }
 }
 
-// MARK: - Read-only subviews
 
 // MARK: - Read-only subviews (PRETTIER VERSION)
 
