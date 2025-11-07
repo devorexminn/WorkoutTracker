@@ -29,6 +29,7 @@ struct WorkoutTrackerApp: App {
     var body: some Scene {
             WindowGroup {
                 ContentView()
+                    .scrollDismissesKeyboard(.immediately)
             }
             .modelContainer(for: [WorkoutSession.self, ExerciseLog.self, SetLog.self])
         }

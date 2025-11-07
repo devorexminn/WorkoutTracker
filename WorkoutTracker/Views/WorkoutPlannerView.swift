@@ -290,7 +290,6 @@ struct WorkoutPlannerView: View {
                     }
                     .padding()
                 }
-                
                 // ✅ Popups
                 if showSavePopup {
                     SavedPopupView(message: "Workout Saved!", detail: "Review or start it in your Workout tab.")

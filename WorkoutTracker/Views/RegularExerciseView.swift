@@ -65,7 +65,7 @@ struct RegularExerciseView: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color.gray.opacity(0.05))
         .cornerRadius(14)
         .shadow(color: .gray.opacity(0.1), radius: 2)
     }
