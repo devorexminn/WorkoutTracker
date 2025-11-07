@@ -11,13 +11,11 @@ struct ActiveWorkoutView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(alignment: .leading, spacing: 20){
                 
                 // MARK: Custom Header
                 Text("Your Workouts")
                     .headerStyle()
-                    .padding(.horizontal)
-                    .padding(.top)
                 
                 if savedWorkouts.isEmpty {
                     Spacer()

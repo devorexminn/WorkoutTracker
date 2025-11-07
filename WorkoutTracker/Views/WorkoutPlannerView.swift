@@ -32,8 +32,12 @@ struct WorkoutPlannerView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         
                         // MARK: Header
-                        Text("Design Your Workout")
-                            .headerStyle()
+                        HStack {
+                            Text("Design Your Workout")
+                                .headerStyle()
+                            Spacer()
+                        }
+                            
                         
                         // MARK: Workout Name
                         VStack(alignment: .leading, spacing: 4) {

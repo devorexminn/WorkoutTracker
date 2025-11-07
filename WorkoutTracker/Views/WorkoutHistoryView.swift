@@ -21,12 +21,12 @@ struct WorkoutHistoryView: View {
     
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 
                 // MARK: Custom Header
                 Text("Past Workouts")
                     .headerStyle()
-                    .padding(.horizontal)
+                    
                 
                 // MARK: Sort Order Toggle
                 Picker("Sort Order", selection: $historySortOrder) {
