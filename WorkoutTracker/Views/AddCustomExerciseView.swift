@@ -12,14 +12,14 @@ struct AddCustomExerciseView: View {
     var onAdd: (ExerciseItem) -> Void
 
     @State private var name = ""
-    @State private var notes = ""
+//    @State private var notes = ""
 
     var body: some View {
         NavigationView {
             Form {
                 Section("Custom Exercise") {
                     TextField("Exercise Name", text: $name)
-                    TextField("Notes (optional)", text: $notes)
+//                    TextField("Notes (optional)", text: $notes)
                 }
             }
             .navigationTitle("Add Custom Exercise")
@@ -32,7 +32,7 @@ struct AddCustomExerciseView: View {
                             bodyPart: "",     // not needed
                             target: "",       // not needed
                             equipment: nil,
-                            notes: notes.isEmpty ? nil : notes
+//                            notes: notes.isEmpty ? nil : notes
                         )
                         context.insert(customExercise)
                         try? context.save()
