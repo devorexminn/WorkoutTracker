@@ -200,9 +200,9 @@ struct WorkoutPlannerView: View {
                                             .padding(.top, 4)
                                         }
                                         .padding()
-                                        .background(Color.white)
+                                        .background(Color(uiColor: .secondarySystemBackground))
                                         .cornerRadius(10)
-                                        .shadow(color: .gray.opacity(0.1), radius: 2)
+                                        .shadow(color: .black.opacity(0.1), radius: 2)
                                     }
 
                                     // MARK: API Exercises
@@ -229,9 +229,9 @@ struct WorkoutPlannerView: View {
                                             .padding(.top, 4)
                                         }
                                         .padding()
-                                        .background(Color.white)
+                                        .background(Color(uiColor: .secondarySystemBackground))
                                         .cornerRadius(10)
-                                        .shadow(color: .gray.opacity(0.1), radius: 2)
+                                        .shadow(color: .black.opacity(0.1), radius: 2)
                                     }
                                 }
                                 .transition(.opacity.animation(.easeInOut(duration: 0.25)))
@@ -307,7 +307,9 @@ struct WorkoutPlannerView: View {
                                         )
                                     }
                                 }
-                                .background(group.first?.isSuperset == true ? Color.purple.opacity(0.05) : Color.white)
+                                .background(group.first?.isSuperset == true
+                                            ? Color.purple.opacity(0.05)
+                                            : Color(uiColor: .secondarySystemBackground))
                                 .cornerRadius(10)
                             }
                         }
@@ -503,7 +505,9 @@ struct ExerciseRow: View {
                 .textFieldStyle(.roundedBorder)
         }
         .padding(6)
-        .background(selectedExercises.contains(exercise.id) ? Color.purple.opacity(0.1) : Color.clear)
+        .background(selectedExercises.contains(exercise.id)
+                    ? Color.purple.opacity(0.1)
+                    : Color.clear)
         .cornerRadius(8)
     }
 }
