@@ -297,9 +297,9 @@ struct WorkoutPlannerView: View {
                         let grouped = groupExercisesBySuperset(addedExercises)
                         
                         LazyVStack(spacing: 8) {
-                            ForEach(grouped, id: \.self) { group in
+                            ForEach(Array(grouped.enumerated()), id: \.offset) { _, group in
                                 VStack(spacing: 0) {
-                                    ForEach(group) { exercise in
+                                    ForEach(group, id: \.id) { exercise in
                                         ExerciseRow(
                                             exercise: binding(for: exercise),
                                             selectedExercises: $selectedExercises,
@@ -441,7 +441,7 @@ struct WorkoutPlannerView: View {
     }
 
     private func binding(for exercise: ExerciseItem) -> Binding<ExerciseItem> {
-        guard let index = addedExercises.firstIndex(of: exercise) else {
+        guard let index = addedExercises.firstIndex(where: { $0.id == exercise.id }) else {
             fatalError("Exercise not found")
         }
         return $addedExercises[index]
@@ -479,7 +479,6 @@ struct ExerciseRow: View {
     
     var body: some View {
         HStack(spacing: 8) {
-            // ✅ Select/Deselect button
             Button {
                 if selectedExercises.contains(exercise.id) {
                     selectedExercises.remove(exercise.id)
@@ -491,12 +490,10 @@ struct ExerciseRow: View {
                     .foregroundColor(selectedExercises.contains(exercise.id) ? .purple : .gray)
             }
 
-            // ✅ Show exercise name (non-editable)
             Text(exercise.name)
                 .font(.system(.body, design: .rounded))
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            // ✅ Editable sets field
             TextField("", text: Binding(
                 get: { String(exercise.sets) },
                 set: { exercise.sets = Int($0) ?? 0 }
@@ -506,7 +503,6 @@ struct ExerciseRow: View {
             .textFieldStyle(.roundedBorder)
             .keyboardType(.numberPad)
 
-            // ✅ Editable reps field
             TextField("", text: Binding(
                 get: { String(exercise.targetReps) },
                 set: { exercise.targetReps = Int($0) ?? 0 }
@@ -523,7 +519,6 @@ struct ExerciseRow: View {
         .cornerRadius(8)
     }
 }
-
 
 struct SupersetSetPicker: View {
     @Environment(\.dismiss) private var dismiss
@@ -559,14 +554,41 @@ struct SupersetSetPicker: View {
     }
 }
 
+// ✅ Stable identity version
 struct ExerciseItem: Identifiable, Hashable {
-    let id = UUID()
+    let id: UUID
     var name: String
     var sets: Int
     var targetReps: Int
     var restPeriod: String
     var isSuperset: Bool
     var supersetGroupID: UUID?
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        sets: Int,
+        targetReps: Int,
+        restPeriod: String,
+        isSuperset: Bool,
+        supersetGroupID: UUID? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.sets = sets
+        self.targetReps = targetReps
+        self.restPeriod = restPeriod
+        self.isSuperset = isSuperset
+        self.supersetGroupID = supersetGroupID
+    }
+
+    static func == (lhs: ExerciseItem, rhs: ExerciseItem) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 #Preview {
