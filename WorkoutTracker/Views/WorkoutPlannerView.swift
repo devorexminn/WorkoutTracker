@@ -479,6 +479,7 @@ struct ExerciseRow: View {
     
     var body: some View {
         HStack(spacing: 8) {
+            // ✅ Select/Deselect button
             Button {
                 if selectedExercises.contains(exercise.id) {
                     selectedExercises.remove(exercise.id)
@@ -490,19 +491,30 @@ struct ExerciseRow: View {
                     .foregroundColor(selectedExercises.contains(exercise.id) ? .purple : .gray)
             }
 
-            TextField("Exercise", text: $exercise.name)
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: .infinity)
+            // ✅ Show exercise name (non-editable)
+            Text(exercise.name)
+                .font(.system(.body, design: .rounded))
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            TextField("3", value: $exercise.sets, formatter: NumberFormatter())
-                .multilineTextAlignment(.center)
-                .frame(width: 40)
-                .textFieldStyle(.roundedBorder)
+            // ✅ Editable sets field
+            TextField("", text: Binding(
+                get: { String(exercise.sets) },
+                set: { exercise.sets = Int($0) ?? 0 }
+            ))
+            .multilineTextAlignment(.center)
+            .frame(width: 40)
+            .textFieldStyle(.roundedBorder)
+            .keyboardType(.numberPad)
 
-            TextField("12", value: $exercise.targetReps, formatter: NumberFormatter())
-                .multilineTextAlignment(.center)
-                .frame(width: 50)
-                .textFieldStyle(.roundedBorder)
+            // ✅ Editable reps field
+            TextField("", text: Binding(
+                get: { String(exercise.targetReps) },
+                set: { exercise.targetReps = Int($0) ?? 0 }
+            ))
+            .multilineTextAlignment(.center)
+            .frame(width: 50)
+            .textFieldStyle(.roundedBorder)
+            .keyboardType(.numberPad)
         }
         .padding(6)
         .background(selectedExercises.contains(exercise.id)
@@ -511,6 +523,7 @@ struct ExerciseRow: View {
         .cornerRadius(8)
     }
 }
+
 
 struct SupersetSetPicker: View {
     @Environment(\.dismiss) private var dismiss
