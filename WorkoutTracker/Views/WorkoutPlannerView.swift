@@ -16,7 +16,7 @@ struct WorkoutPlannerView: View {
     @State private var showingAddCustomExercise = false
     @State private var showResults = true
 
-    // ✅ Popup states
+    // Popups
     @State private var showSavePopup = false
     @State private var showNameRequiredPopup = false
     
@@ -38,7 +38,6 @@ struct WorkoutPlannerView: View {
                             Spacer()
                         }
                             
-                        
                         // MARK: Workout Name
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Workout Name:")
@@ -66,7 +65,6 @@ struct WorkoutPlannerView: View {
                                 .background(Color.purple.opacity(0.85))
                                 .cornerRadius(10)
 
-                                // 👇 Inline smaller "+ Custom" button
                                 Button {
                                     showingAddCustomExercise = true
                                 } label: {
@@ -84,6 +82,42 @@ struct WorkoutPlannerView: View {
                                 }
                             }
                         }
+                        
+                        // MARK: Body Part List
+                        if !viewModel.bodyParts.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(viewModel.bodyParts, id: \.self) { part in
+                                        Button {
+                                            selectedBodyPart = part
+                                            searchTerm = part
+                                            Task {
+                                                await viewModel.fetchExercises(forBodyPart: part)
+                                                withAnimation {
+                                                    showResults = true
+                                                }
+                                            }
+                                        } label: {
+                                            Text(part.capitalized)
+                                                .font(.subheadline.bold())
+                                                .padding(.vertical, 8)
+                                                .padding(.horizontal, 14)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 10)
+                                                        .fill(
+                                                            selectedBodyPart == part
+                                                            ? Color.purple.opacity(0.8)
+                                                            : Color.purple.opacity(0.15)
+                                                        )
+                                                )
+                                                .foregroundColor(selectedBodyPart == part ? .white : .purple)
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
+                                .padding(.top, 4)
+                            }
+                        }
 
                         // MARK: Search Results
                         if viewModel.isLoading {
@@ -93,17 +127,21 @@ struct WorkoutPlannerView: View {
                             Text(error)
                                 .foregroundColor(.red)
                                 .padding(.top, 8)
-                        }
-                        else if !viewModel.exercises.isEmpty || !customExercises.isEmpty {
-                            // MARK: Toggle Button
+                        } else if !viewModel.exercises.isEmpty || !customExercises.isEmpty {
+                            
+                            // Toggle button
                             HStack {
                                 Button {
-                                    withAnimation { showResults.toggle() }
+                                    withAnimation(.easeInOut(duration: 0.25)) {
+                                        showResults.toggle()
+                                    }
                                 } label: {
-                                    Label(showResults ? "Hide Results" : "Show Results",
-                                          systemImage: showResults ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                                        .foregroundColor(.purple)
-                                        .font(.subheadline.bold())
+                                    Label(
+                                        showResults ? "Hide Results" : "Show Results",
+                                        systemImage: showResults ? "chevron.up.circle.fill" : "chevron.down.circle.fill"
+                                    )
+                                    .foregroundColor(.purple)
+                                    .font(.subheadline.bold())
                                 }
                                 Spacer()
                             }
@@ -111,6 +149,7 @@ struct WorkoutPlannerView: View {
 
                             if showResults {
                                 LazyVStack(alignment: .leading, spacing: 12) {
+                                    
                                     // MARK: Custom Exercises (SwiftData)
                                     ForEach(customExercises.filter {
                                         searchTerm.isEmpty ||
@@ -155,7 +194,6 @@ struct WorkoutPlannerView: View {
                                                     isSuperset: false
                                                 )
                                                 addedExercises.append(newExercise)
-                                                withAnimation { showResults = false }
                                             }
                                             .font(.caption)
                                             .foregroundColor(.purple)
@@ -185,7 +223,6 @@ struct WorkoutPlannerView: View {
 
                                             Button("+ Add to Workout") {
                                                 addExercise(exercise)
-                                                withAnimation { showResults = false }
                                             }
                                             .font(.caption)
                                             .foregroundColor(.purple)
@@ -197,7 +234,7 @@ struct WorkoutPlannerView: View {
                                         .shadow(color: .gray.opacity(0.1), radius: 2)
                                     }
                                 }
-                                .transition(.opacity.combined(with: .slide))
+                                .transition(.opacity.animation(.easeInOut(duration: 0.25)))
                             }
                         }
 
@@ -218,7 +255,6 @@ struct WorkoutPlannerView: View {
                                                 ? Color(.systemGray4)
                                                 : Color.purple.opacity(0.85))
                                     .cornerRadius(10)
-                                    .animation(.easeInOut(duration: 0.2), value: selectedExercises.isEmpty)
                             }
                             .disabled(selectedExercises.isEmpty)
                             .sheet(isPresented: $showingSupersetSheet) {
@@ -243,7 +279,6 @@ struct WorkoutPlannerView: View {
                                                 ? Color(.systemGray4)
                                                 : Color.red.opacity(0.9))
                                     .cornerRadius(10)
-                                    .animation(.easeInOut(duration: 0.2), value: selectedExercises.isEmpty)
                             }
                             .disabled(selectedExercises.isEmpty)
                         }
@@ -254,7 +289,6 @@ struct WorkoutPlannerView: View {
                             Text("Exercise Name").bold().frame(maxWidth: .infinity, alignment: .leading)
                             Text("Sets").bold().frame(width: 40, alignment: .center)
                             Text("Reps").bold().frame(width: 50, alignment: .center)
-                            //Text("Rest").bold().frame(width: 60, alignment: .center)
                         }
                         .font(.subheadline)
                         .padding(.horizontal, 4)
@@ -294,13 +328,17 @@ struct WorkoutPlannerView: View {
                     }
                     .padding()
                 }
-                // ✅ Popups
+                
+                // Popups
                 if showSavePopup {
                     SavedPopupView(message: "Workout Saved!", detail: "Review or start it in your Workout tab.")
                 }
                 if showNameRequiredPopup {
                     SavedPopupView(message: "Name Required!", detail: "Please enter a workout name before saving.", color: .orange)
                 }
+            }
+            .task {
+                await viewModel.fetchBodyParts()
             }
             .onChange(of: searchTerm) { newValue in
                 if newValue.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -338,14 +376,13 @@ struct WorkoutPlannerView: View {
                     supersetID: exercise.supersetGroupID
                 )
             },
-            isTemplate: true // ✅ this one line is new
+            isTemplate: true
         )
         
         context.insert(newWorkout)
         
         do {
             try context.save()
-            print("✅ Workout saved successfully: \(newWorkout.title)")
             addedExercises.removeAll()
             workoutName = ""
             withAnimation {
@@ -361,11 +398,11 @@ struct WorkoutPlannerView: View {
         }
     }
     
-    // MARK: - Other Helpers (unchanged)
+    // MARK: - Other Helpers
     private func search() async {
         let input = searchTerm.lowercased()
         await viewModel.searchExercises(for: input)
-        withAnimation { showResults = true }
+        withAnimation(.easeInOut(duration: 0.25)) { showResults = true }
     }
 
     private func addExercise(_ exercise: Exercise) {
@@ -430,6 +467,7 @@ struct WorkoutPlannerView: View {
         return result
     }
 }
+
 // MARK: - Subviews
 
 struct ExerciseRow: View {
@@ -463,11 +501,6 @@ struct ExerciseRow: View {
                 .multilineTextAlignment(.center)
                 .frame(width: 50)
                 .textFieldStyle(.roundedBorder)
-
-//            TextField("60s", text: $exercise.restPeriod)
-//                .multilineTextAlignment(.center)
-//                .frame(width: 60)
-//                .textFieldStyle(.roundedBorder)
         }
         .padding(6)
         .background(selectedExercises.contains(exercise.id) ? Color.purple.opacity(0.1) : Color.clear)
