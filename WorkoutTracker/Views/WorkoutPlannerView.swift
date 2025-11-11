@@ -191,7 +191,8 @@ struct WorkoutPlannerView: View {
                                                     sets: 3,
                                                     targetReps: 12,
                                                     restPeriod: "60s",
-                                                    isSuperset: false
+                                                    isSuperset: false,
+                                                    supersetGroupID: nil
                                                 )
                                                 addedExercises.append(newExercise)
                                             }
@@ -200,7 +201,8 @@ struct WorkoutPlannerView: View {
                                             .padding(.top, 4)
                                         }
                                         .padding()
-                                        .background(Color(uiColor: .secondarySystemBackground))                                        .cornerRadius(10)
+                                        .background(Color(uiColor: .secondarySystemBackground))
+                                        .cornerRadius(10)
                                         .shadow(color: .black.opacity(0.1), radius: 2)
                                     }
 
@@ -228,7 +230,8 @@ struct WorkoutPlannerView: View {
                                             .padding(.top, 4)
                                         }
                                         .padding()
-                                        .background(Color(uiColor: .secondarySystemBackground))                                        .cornerRadius(10)
+                                        .background(Color(uiColor: .secondarySystemBackground))
+                                        .cornerRadius(10)
                                         .shadow(color: .black.opacity(0.1), radius: 2)
                                     }
                                 }
@@ -295,26 +298,26 @@ struct WorkoutPlannerView: View {
                         let grouped = groupExercisesBySuperset(addedExercises)
 
                         LazyVStack(spacing: 8) {
-                            ForEach(grouped, id: \.self) { group in
+                            // Use stable index-based IDs for groups so changing values
+                            // inside ExerciseItem doesn't invalidate the group identity.
+                            ForEach(Array(grouped.enumerated()), id: \.offset) { _, group in
                                 VStack(spacing: 0) {
                                     ForEach(group) { exercise in
                                         ExerciseRow(
-                                            exercise: binding(for: exercise),
+                                            exercise: binding(forID: exercise.id),
                                             selectedExercises: $selectedExercises,
                                             onDelete: { removeExercise($0) }
                                         )
                                     }
                                 }
-                                // ✅ Superset highlight preserved + dark mode adaptive
                                 .background(
                                     group.first?.isSuperset == true
-                                    ? Color.purple.opacity(0.08) // light, soft purple tint for supersets
-                                    : Color(uiColor: .secondarySystemBackground) // adaptive for light/dark
+                                    ? Color.purple.opacity(0.10) // highlight superset group
+                                    : Color(uiColor: .secondarySystemBackground) // normal bg
                                 )
                                 .cornerRadius(10)
                             }
                         }
-
                         
                         // MARK: Save Button
                         Button {
@@ -406,7 +409,9 @@ struct WorkoutPlannerView: View {
     private func search() async {
         let input = searchTerm.lowercased()
         await viewModel.searchExercises(for: input)
-        withAnimation(.easeInOut(duration: 0.25)) { showResults = true }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showResults = true
+        }
     }
 
     private func addExercise(_ exercise: Exercise) {
@@ -415,7 +420,8 @@ struct WorkoutPlannerView: View {
             sets: 3,
             targetReps: 12,
             restPeriod: "60s",
-            isSuperset: false
+            isSuperset: false,
+            supersetGroupID: nil
         )
         addedExercises.append(newExercise)
     }
@@ -442,9 +448,10 @@ struct WorkoutPlannerView: View {
         selectedExercises.removeAll()
     }
 
-    private func binding(for exercise: ExerciseItem) -> Binding<ExerciseItem> {
-        guard let index = addedExercises.firstIndex(of: exercise) else {
-            fatalError("Exercise not found")
+    // Binding by stable ID (not by full value)
+    private func binding(forID id: UUID) -> Binding<ExerciseItem> {
+        guard let index = addedExercises.firstIndex(where: { $0.id == id }) else {
+            fatalError("Exercise not found for id \(id)")
         }
         return $addedExercises[index]
     }
@@ -481,6 +488,7 @@ struct ExerciseRow: View {
     
     var body: some View {
         HStack(spacing: 8) {
+            // Select for superset / delete
             Button {
                 if selectedExercises.contains(exercise.id) {
                     selectedExercises.remove(exercise.id)
@@ -492,30 +500,40 @@ struct ExerciseRow: View {
                     .foregroundColor(selectedExercises.contains(exercise.id) ? .purple : .gray)
             }
 
-            // ✅ Show exercise name (non-editable)
-             Text(exercise.name)
-                 .font(.system(.body, design: .rounded))
-                 .frame(maxWidth: .infinity, alignment: .leading)
+            // Exercise name (non-editable here)
+            Text(exercise.name)
+                .font(.system(.body, design: .rounded))
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-             // ✅ Editable sets field
-             TextField("", text: Binding(
-                 get: { String(exercise.sets) },
-                 set: { exercise.sets = Int($0) ?? 0 }
-             ))
-             .multilineTextAlignment(.center)
-             .frame(width: 40)
-             .textFieldStyle(.roundedBorder)
-             .keyboardType(.numberPad)
+            // Editable Sets
+            TextField(
+                "",
+                text: Binding(
+                    get: { String(exercise.sets) },
+                    set: { newValue in
+                        exercise.sets = Int(newValue) ?? exercise.sets
+                    }
+                )
+            )
+            .multilineTextAlignment(.center)
+            .frame(width: 40)
+            .textFieldStyle(.roundedBorder)
+            .keyboardType(.numberPad)
 
-             // ✅ Editable reps field
-             TextField("", text: Binding(
-                 get: { String(exercise.targetReps) },
-                 set: { exercise.targetReps = Int($0) ?? 0 }
-             ))
-             .multilineTextAlignment(.center)
-             .frame(width: 50)
-             .textFieldStyle(.roundedBorder)
-             .keyboardType(.numberPad)
+            // Editable Reps
+            TextField(
+                "",
+                text: Binding(
+                    get: { String(exercise.targetReps) },
+                    set: { newValue in
+                        exercise.targetReps = Int(newValue) ?? exercise.targetReps
+                    }
+                )
+            )
+            .multilineTextAlignment(.center)
+            .frame(width: 50)
+            .textFieldStyle(.roundedBorder)
+            .keyboardType(.numberPad)
         }
         .padding(6)
         .background(selectedExercises.contains(exercise.id) ? Color.purple.opacity(0.1) : Color.clear)
