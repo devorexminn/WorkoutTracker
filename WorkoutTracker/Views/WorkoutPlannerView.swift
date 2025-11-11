@@ -200,8 +200,7 @@ struct WorkoutPlannerView: View {
                                             .padding(.top, 4)
                                         }
                                         .padding()
-                                        .background(Color(uiColor: .secondarySystemBackground))
-                                        .cornerRadius(10)
+                                        .background(Color(uiColor: .secondarySystemBackground))                                        .cornerRadius(10)
                                         .shadow(color: .black.opacity(0.1), radius: 2)
                                     }
 
@@ -229,8 +228,7 @@ struct WorkoutPlannerView: View {
                                             .padding(.top, 4)
                                         }
                                         .padding()
-                                        .background(Color(uiColor: .secondarySystemBackground))
-                                        .cornerRadius(10)
+                                        .background(Color(uiColor: .secondarySystemBackground))                                        .cornerRadius(10)
                                         .shadow(color: .black.opacity(0.1), radius: 2)
                                     }
                                 }
@@ -295,11 +293,11 @@ struct WorkoutPlannerView: View {
                         
                         // MARK: Superset Grouping
                         let grouped = groupExercisesBySuperset(addedExercises)
-                        
+
                         LazyVStack(spacing: 8) {
-                            ForEach(Array(grouped.enumerated()), id: \.offset) { _, group in
+                            ForEach(grouped, id: \.self) { group in
                                 VStack(spacing: 0) {
-                                    ForEach(group, id: \.id) { exercise in
+                                    ForEach(group) { exercise in
                                         ExerciseRow(
                                             exercise: binding(for: exercise),
                                             selectedExercises: $selectedExercises,
@@ -307,12 +305,16 @@ struct WorkoutPlannerView: View {
                                         )
                                     }
                                 }
-                                .background(group.first?.isSuperset == true
-                                            ? Color.purple.opacity(0.05)
-                                            : Color(uiColor: .secondarySystemBackground))
+                                // ✅ Superset highlight preserved + dark mode adaptive
+                                .background(
+                                    group.first?.isSuperset == true
+                                    ? Color.purple.opacity(0.08) // light, soft purple tint for supersets
+                                    : Color(uiColor: .secondarySystemBackground) // adaptive for light/dark
+                                )
                                 .cornerRadius(10)
                             }
                         }
+
                         
                         // MARK: Save Button
                         Button {
@@ -441,7 +443,7 @@ struct WorkoutPlannerView: View {
     }
 
     private func binding(for exercise: ExerciseItem) -> Binding<ExerciseItem> {
-        guard let index = addedExercises.firstIndex(where: { $0.id == exercise.id }) else {
+        guard let index = addedExercises.firstIndex(of: exercise) else {
             fatalError("Exercise not found")
         }
         return $addedExercises[index]
@@ -490,32 +492,33 @@ struct ExerciseRow: View {
                     .foregroundColor(selectedExercises.contains(exercise.id) ? .purple : .gray)
             }
 
-            Text(exercise.name)
-                .font(.system(.body, design: .rounded))
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // ✅ Show exercise name (non-editable)
+             Text(exercise.name)
+                 .font(.system(.body, design: .rounded))
+                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            TextField("", text: Binding(
-                get: { String(exercise.sets) },
-                set: { exercise.sets = Int($0) ?? 0 }
-            ))
-            .multilineTextAlignment(.center)
-            .frame(width: 40)
-            .textFieldStyle(.roundedBorder)
-            .keyboardType(.numberPad)
+             // ✅ Editable sets field
+             TextField("", text: Binding(
+                 get: { String(exercise.sets) },
+                 set: { exercise.sets = Int($0) ?? 0 }
+             ))
+             .multilineTextAlignment(.center)
+             .frame(width: 40)
+             .textFieldStyle(.roundedBorder)
+             .keyboardType(.numberPad)
 
-            TextField("", text: Binding(
-                get: { String(exercise.targetReps) },
-                set: { exercise.targetReps = Int($0) ?? 0 }
-            ))
-            .multilineTextAlignment(.center)
-            .frame(width: 50)
-            .textFieldStyle(.roundedBorder)
-            .keyboardType(.numberPad)
+             // ✅ Editable reps field
+             TextField("", text: Binding(
+                 get: { String(exercise.targetReps) },
+                 set: { exercise.targetReps = Int($0) ?? 0 }
+             ))
+             .multilineTextAlignment(.center)
+             .frame(width: 50)
+             .textFieldStyle(.roundedBorder)
+             .keyboardType(.numberPad)
         }
         .padding(6)
-        .background(selectedExercises.contains(exercise.id)
-                    ? Color.purple.opacity(0.1)
-                    : Color.clear)
+        .background(selectedExercises.contains(exercise.id) ? Color.purple.opacity(0.1) : Color.clear)
         .cornerRadius(8)
     }
 }
@@ -554,41 +557,14 @@ struct SupersetSetPicker: View {
     }
 }
 
-// ✅ Stable identity version
 struct ExerciseItem: Identifiable, Hashable {
-    let id: UUID
+    let id = UUID()
     var name: String
     var sets: Int
     var targetReps: Int
     var restPeriod: String
     var isSuperset: Bool
     var supersetGroupID: UUID?
-
-    init(
-        id: UUID = UUID(),
-        name: String,
-        sets: Int,
-        targetReps: Int,
-        restPeriod: String,
-        isSuperset: Bool,
-        supersetGroupID: UUID? = nil
-    ) {
-        self.id = id
-        self.name = name
-        self.sets = sets
-        self.targetReps = targetReps
-        self.restPeriod = restPeriod
-        self.isSuperset = isSuperset
-        self.supersetGroupID = supersetGroupID
-    }
-
-    static func == (lhs: ExerciseItem, rhs: ExerciseItem) -> Bool {
-        lhs.id == rhs.id
-    }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
 }
 
 #Preview {

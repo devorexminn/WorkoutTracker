@@ -31,7 +31,5 @@ struct ContentView: View {
             }
             .navigationViewStyle(.stack)
         }
-//        .hideKeyboardOnTap()     // ✅ Tap outside
-//        .hideKeyboardOnScroll()  // ✅ Scroll/drag dismisses too
     }
 }
