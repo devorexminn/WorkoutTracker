@@ -1,7 +1,7 @@
 //  WorkoutHistoryDetailView.swift
 //  WorkoutTracker
 //
-//  Read-only summary screen that mirrors WorkoutDetailView’s grouping/order.
+//  Chronological layout that mirrors Active Workout set structure.
 
 import SwiftUI
 import SwiftData
@@ -15,17 +15,71 @@ struct WorkoutHistoryDetailView: View {
                 headerSection
                 Divider()
 
-                // 👇 Use the SAME grouping + ordering approach as WorkoutDetailView
+                // ✅ Mimic the Active Workout layout
                 ForEach(sortedSupersetIDs, id: \.self) { supersetID in
                     if let supersetID = supersetID {
                         let group = groupedExercises[supersetID] ?? []
-                        HistorySupersetGroupView(
-                            group: group,
-                            supersetID: supersetID,
-                            supersetLabel: supersetLabel(for:)
-                        )
-                        .padding(.horizontal)
+                        if !group.isEmpty {
+                            // ✅ Styled Superset Card Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Superset \(supersetLabel(for: supersetID))")
+                                    .font(.headline)
+                                    .foregroundColor(.purple)
+                                    .padding(.horizontal, 8)
+
+                                // Determine the number of sets by the max count
+                                let maxSets = group.map { $0.sets.count }.max() ?? 0
+
+                                // 🔁 Loop through sets in parallel order (like Active Workout)
+                                ForEach(1...maxSets, id: \.self) { setNumber in
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("Set \(setNumber)")
+                                            .font(.subheadline.bold())
+                                            .foregroundColor(.secondary)
+                                            .padding(.horizontal, 8)
+
+                                        VStack(spacing: 8) {
+                                            ForEach(group) { exercise in
+                                                if let matchingSet = exercise.sets.first(where: { $0.setNumber == setNumber }) {
+                                                    HStack {
+                                                        VStack(alignment: .leading, spacing: 4) {
+                                                            Text(exercise.name)
+                                                                .font(.subheadline.weight(.medium))
+                                                                .foregroundColor(.primary)
+                                                            HStack(spacing: 8) {
+                                                                Text("\(matchingSet.reps) reps")
+                                                                Circle()
+                                                                    .fill(Color.purple.opacity(0.3))
+                                                                    .frame(width: 4, height: 4)
+                                                                Text("\(Int(matchingSet.weight)) lb")
+                                                            }
+                                                            .font(.footnote)
+                                                            .foregroundColor(.secondary)
+                                                        }
+                                                        Spacer()
+                                                    }
+                                                    .padding(.vertical, 10)
+                                                    .padding(.horizontal, 14)
+                                                    .background(Color(.systemBackground))
+                                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                                    .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+                                                }
+                                            }
+                                        }
+                                        .padding(.horizontal, 4)
+                                    }
+                                }
+                            }
+                            .padding(14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .fill(Color(.secondarySystemGroupedBackground))
+                                    .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
+                            )
+                            .padding(.horizontal)
+                        }
                     } else {
+                        // Singles
                         let normalExercises = groupedExercises[nil] ?? []
                         ForEach(normalExercises) { exercise in
                             HistoryExerciseView(exercise: exercise)
@@ -42,7 +96,7 @@ struct WorkoutHistoryDetailView: View {
         .scrollIndicators(.hidden)
     }
 
-    // MARK: Header (read-only)
+    // MARK: Header
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(workout.title)
@@ -55,14 +109,12 @@ struct WorkoutHistoryDetailView: View {
         .padding(.horizontal)
     }
 
-    // MARK: Grouping / Ordering (copied to match WorkoutDetailView behavior)
+    // MARK: Helpers
     private var groupedExercises: [UUID?: [ExerciseLog]] {
-        // Dictionary(grouping:) preserves the *input order* within each grouped array.
         Dictionary(grouping: workout.exercises) { $0.supersetID }
     }
 
     private var sortedSupersetIDs: [UUID?] {
-        // Matches your guide file exactly (nil first).
         groupedExercises.keys.sorted {
             if $0 == nil { return true }
             if $1 == nil { return false }
@@ -70,7 +122,6 @@ struct WorkoutHistoryDetailView: View {
         }
     }
 
-    // Same label scheme as your active view (A, B, C…)
     private func supersetLabel(for id: UUID) -> String {
         let allIDs = Array(Set(workout.exercises.compactMap { $0.supersetID }))
             .sorted { $0.uuidString < $1.uuidString }
@@ -82,9 +133,32 @@ struct WorkoutHistoryDetailView: View {
     }
 }
 
+// MARK: - Read-only Set Row (mirrors ActiveWorkout structure)
+private struct HistorySetRow: View {
+    let exerciseName: String
+    let set: SetLog
 
-// MARK: - Read-only subviews (PRETTIER VERSION)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(exerciseName)
+                .font(.subheadline.weight(.medium))
+            HStack {
+                Text("\(set.reps) reps")
+                Spacer()
+                Text("\(Int(set.weight)) lb")
+            }
+            .font(.footnote)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        }
+        .padding(.horizontal, 6)
+    }
+}
 
+// MARK: - For single exercises
 private struct HistoryExerciseView: View {
     let exercise: ExerciseLog
 
@@ -103,23 +177,18 @@ private struct HistoryExerciseView: View {
 
                         Spacer()
 
-                        Text("\(Int(set.reps)) reps")
+                        Text("\(set.reps) reps")
                             .font(.subheadline)
-                            .foregroundColor(.primary)
-
                         Circle()
                             .fill(Color.purple.opacity(0.3))
                             .frame(width: 4, height: 4)
-
                         Text("\(Int(set.weight)) lb")
                             .font(.subheadline)
-                            .foregroundColor(.primary)
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal, 14)
                     .background(Color(.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
                 }
             }
         }
@@ -127,36 +196,6 @@ private struct HistoryExerciseView: View {
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-        )
-    }
-}
-
-private struct HistorySupersetGroupView: View {
-    let group: [ExerciseLog]
-    let supersetID: UUID
-    let supersetLabel: (UUID) -> String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Text("Superset \(supersetLabel(supersetID))")
-                    .font(.headline)
-                    .foregroundColor(.purple)
-                Spacer()
-            }
-            .padding(.horizontal, 6)
-
-            VStack(spacing: 14) {
-                ForEach(group) { exercise in
-                    HistoryExerciseView(exercise: exercise)
-                }
-            }
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.systemGroupedBackground))
-                .shadow(color: .black.opacity(0.04), radius: 3, x: 0, y: 2)
         )
     }
 }
